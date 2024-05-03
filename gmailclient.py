@@ -66,7 +66,7 @@ class GmailClient:
 # Example usage
 if __name__ == '__main__':
     # List messages with the specified label
-    messages = GmailClient().list_messages_with_label_name("Job Search", 10)
+    messages = GmailClient().list_messages_with_label_name("Job Search", 20)
     print("Number of messages:", len(messages))
     for status in ApplicationStatus:
         print(f"Number of : {status.name}",
