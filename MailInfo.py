@@ -2,8 +2,11 @@ from MessageParser import MessageParser, ApplicationStatus
 
 
 class MailInfo:
+    def __init__(self, words_list):
+        self.words_list = words_list
+
     def get_info(self, message: dict) -> dict:
-        parser = MessageParser(message)
+        parser = MessageParser(message, self.words_list)
         try:
             info = {"subject": parser.subject,
                     "body": parser.body,

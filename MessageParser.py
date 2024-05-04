@@ -2,24 +2,28 @@ import base64
 from datetime import datetime
 from enum import Enum, auto
 
+from WordsList import WordsList
+
 
 class ApplicationStatus(Enum):
     UNKNOWN = auto()
     ERROR = auto()
     IGNORE = auto()
     APPLIED = auto()
+    ADVANCED = auto()
     REJECTED = auto()
 
 
 def _contains(text, words):
     text = text.lower()
-    return any(word.lower() in text for word in words)
+    return any(word.lower() in text.replace('\n', ' ') for word in words)
 
 
 class MessageParser:
 
-    def __init__(self, message):
+    def __init__(self, message, words_list: WordsList):
         self.message = message
+        self.words_list = words_list
         self._body = None
         self._sender = None
 
@@ -71,16 +75,18 @@ class MessageParser:
     @property
     def date(self) -> datetime:
         date_string = self._get_header("Date")
-        date_format = "%a, %d %b %Y %H:%M:%S %z"
+
+        # Check if the date string contains timezone information
         if "(" in date_string and ")" in date_string:
-            date_format = "%a, %d %b %Y %H:%M:%S %z (%Z)"
+            date_string = date_string[:-6]
+        date_format = "%a, %d %b %Y %H:%M:%S %z"
 
         # Parse the date string into a datetime object
         return datetime.strptime(date_string, date_format)
 
-    rejections_words = ["Though", "regret", "although", "not to continue", "time and energy you invested",
-                        "after carefully", "você não seguirá"]
-    applied_words = ["will carefully review", "will review", "are a strong match for the role", "will contact you if your skills"]
+    applied_words = ["will carefully review", "will review", "are a strong match for the role",
+                     "will contact you if your skills", "if you're selected to move forward",
+                     "application has been received", "If your profile is a good fit"]
     ignored_words = ["apply@hirewithnear.com", "team@hi.wellfound.com", "contato@geekhunter.com.br", "jobs-noreply@linkedin.com"]
 
     def _body_contains(self, words):
@@ -91,11 +97,13 @@ class MessageParser:
 
     @property
     def status(self) -> ApplicationStatus:
-        if self._body_contains(self.rejections_words):
+        if self._body_contains(self.words_list.words("rejected")):
             return ApplicationStatus.REJECTED
-        elif self._body_contains(self.applied_words):
+        elif self._body_contains(self.words_list.words("applied")):
             return ApplicationStatus.APPLIED
-        elif self._sender_contains(self.ignored_words):
+        elif self._body_contains(self.words_list.words("advanced")):
+            return ApplicationStatus.ADVANCED
+        elif self._sender_contains(self.words_list.words("ignored")):
             return ApplicationStatus.IGNORE
         print("***" * 10)
         print(self.sender)

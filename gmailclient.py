@@ -2,13 +2,14 @@ from googleapiclient.discovery import build
 
 from MailInfo import MailInfo
 from MessageParser import ApplicationStatus
+from WordsList import WordsList
 from credentials import obtain_access_token
 
 
 class GmailClient:
     def __init__(self):
         self.service = build('gmail', 'v1', credentials=obtain_access_token())
-        self.mail_info = MailInfo()
+        self.mail_info = MailInfo(WordsList())
 
     def _get_label_id(self, label_name):
 
@@ -66,7 +67,7 @@ class GmailClient:
 # Example usage
 if __name__ == '__main__':
     # List messages with the specified label
-    messages = GmailClient().list_messages_with_label_name("Job Search", 20)
+    messages = GmailClient().list_messages_with_label_name("Job Search", 50)
     print("Number of messages:", len(messages))
     for status in ApplicationStatus:
         print(f"Number of : {status.name}",
